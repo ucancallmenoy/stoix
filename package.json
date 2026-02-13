@@ -1,0 +1,45 @@
+{
+  "name": "stoix",
+  "version": "0.1.0",
+  "description": "Stoix — A Node + Express + React framework with Vite, fully written in TypeScript",
+  "type": "module",
+  "bin": {
+    "stoix": "./dist/bin/index.js"
+  },
+  "scripts": {
+    "clean": "node -e \"const fs=require('fs');['template/node_modules','template/dist','template/.vite'].forEach(d=>{if(fs.existsSync(d)){fs.rmSync(d,{recursive:true,force:true});console.log('removed',d)}})\"",
+    "build": "tsc",
+    "prepack": "npm run clean && npm run build"
+  },
+  "files": [
+    "dist",
+    "template",
+    "!template/node_modules",
+    "!template/dist",
+    "!template/.vite"
+  ],
+  "keywords": [
+    "stoix",
+    "react",
+    "express",
+    "vite",
+    "typescript",
+    "framework",
+    "cli",
+    "scaffolding"
+  ],
+  "author": "Patrick",
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "fs-extra": "^11.2.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.3.3"
+  }
+}

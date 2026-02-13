@@ -1,0 +1,8 @@
+# Dependencies & build output inside template
+template/node_modules/
+template/dist/
+template/.vite/
+
+# OS / editor
+.DS_Store
+*.tsbuildinfo

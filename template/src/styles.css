@@ -1,0 +1,198 @@
+/* ── Stoix ── Discipline over decoration ────────── */
+
+:root {
+  --stoix-bg: #111111;
+  --stoix-surface: #1a1a1a;
+  --stoix-border: #333333;
+  --stoix-text: #ffffff;
+  --stoix-text-muted: #888888;
+  --stoix-marble: #e5e5e5;
+  --stoix-stone: #888888;
+  --stoix-font-body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --stoix-font-heading: Georgia, 'Times New Roman', serif;
+  --stoix-mono: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--stoix-font-body);
+  background-color: var(--stoix-bg);
+  color: var(--stoix-text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--stoix-marble);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--stoix-text);
+}
+
+/* ── Layout ──────────────────────────────────────── */
+
+.stoix-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.stoix-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+}
+
+/* ── Page ────────────────────────────────────────── */
+
+.stoix-page {
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+/* ── Hero ────────────────────────────────────────── */
+
+.stoix-hero {
+  padding: 2rem 0;
+}
+
+.stoix-title {
+  font-family: var(--stoix-font-heading);
+  font-size: 3.5rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  color: var(--stoix-text);
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+}
+
+.stoix-subtitle {
+  font-size: 1rem;
+  color: var(--stoix-text-muted);
+  font-weight: 400;
+  line-height: 1.6;
+  max-width: 440px;
+  margin: 0 auto;
+}
+
+/* ── Divider (temple foundation line) ────────────── */
+
+.stoix-divider {
+  width: 80px;
+  height: 1px;
+  background: var(--stoix-border);
+  margin: 2.5rem auto;
+}
+
+/* ── System Status ───────────────────────────────── */
+
+.stoix-section-heading {
+  font-family: var(--stoix-font-body);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--stoix-text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.stoix-status-grid {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+}
+
+.stoix-status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.stoix-status-label {
+  font-size: 0.8rem;
+  color: var(--stoix-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.stoix-status-value {
+  font-size: 1rem;
+  color: var(--stoix-text-muted);
+  font-family: var(--stoix-mono);
+}
+
+.stoix-status-value.ok {
+  color: var(--stoix-marble);
+}
+
+/* ── Quote ───────────────────────────────────────── */
+
+.stoix-quote {
+  padding: 0;
+  border: none;
+  margin: 0 auto;
+  max-width: 480px;
+}
+
+.stoix-quote p {
+  font-family: var(--stoix-font-heading);
+  font-size: 1.05rem;
+  font-style: italic;
+  color: var(--stoix-marble);
+  line-height: 1.8;
+  margin-bottom: 0.75rem;
+}
+
+.stoix-quote cite {
+  font-family: var(--stoix-font-body);
+  font-size: 0.8rem;
+  font-style: normal;
+  color: var(--stoix-text-muted);
+  letter-spacing: 0.05em;
+}
+
+/* ── Principle ───────────────────────────────────── */
+
+.stoix-principle {
+  margin-top: 2.5rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--stoix-stone);
+}
+
+/* ── Footer ──────────────────────────────────────── */
+
+.stoix-footer {
+  text-align: center;
+  padding: 2rem;
+}
+
+.stoix-footer-line {
+  width: 40px;
+  height: 1px;
+  background: var(--stoix-border);
+  margin: 0 auto 1rem;
+}
+
+.stoix-footer p {
+  font-size: 0.75rem;
+  color: var(--stoix-text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}

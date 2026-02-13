@@ -1,0 +1,9 @@
+node_modules/
+dist/
+template/node_modules/
+template/dist/
+template/.env
+template/.env.local
+template/.vite/
+*.tsbuildinfo
+.DS_Store
