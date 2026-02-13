@@ -21,7 +21,6 @@
   },
   "include": [
     "src",
-    "pages",
     "server",
     "stoix.config.ts",
     "vite.config.ts",

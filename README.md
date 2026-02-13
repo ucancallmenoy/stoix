@@ -39,7 +39,7 @@ Project names must start with a letter and may contain letters, numbers, `.`, `_
 ## Generated Project Structure
 
 ```text
-my-app/
+└──my-app/
 ├── package.json                  # Dependencies and scripts
 ├── stoix.config.ts               # Stoix framework configuration
 ├── tsconfig.json                 # TypeScript config (shared)
@@ -55,9 +55,9 @@ my-app/
 ├── src/                          # React client source
 │   ├── App.tsx                   # Root React component
 │   ├── main.tsx                  # Client entry point
-│   └── styles.css                # Global styles
-├── pages/                        # SSR pages (if enabled)
-│   └── index.tsx                 # Home page
+│   ├── styles.css                # Global styles
+│   └── pages/                    # SSR pages (if enabled)
+│       └── index.tsx             # Home page
 └── public/                       # Static assets
     └── favicon.svg               # Favicon
 ```
@@ -146,3 +146,4 @@ This removes template build artifacts (`template/node_modules`, `template/dist`,
 ## License
 
 MIT
+
