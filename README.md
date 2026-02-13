@@ -39,7 +39,7 @@ Project names must start with a letter and may contain letters, numbers, `.`, `_
 ## Generated Project Structure
 
 ```text
-└──my-app/
+my-app/
 ├── package.json                  # Dependencies and scripts
 ├── stoix.config.ts               # Stoix framework configuration
 ├── tsconfig.json                 # TypeScript config (shared)
