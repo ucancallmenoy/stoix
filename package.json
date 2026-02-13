@@ -4,7 +4,7 @@
   "description": "Stoix — A Node + Express + React framework with Vite, fully written in TypeScript",
   "type": "module",
   "bin": {
-    "stoix": "./dist/bin/index.js"
+    "stoix": "dist/bin/index.js"
   },
   "scripts": {
     "clean": "node -e \"const fs=require('fs');['template/node_modules','template/dist','template/.vite'].forEach(d=>{if(fs.existsSync(d)){fs.rmSync(d,{recursive:true,force:true});console.log('removed',d)}})\"",

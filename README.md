@@ -47,7 +47,7 @@ my-app/
 ├── vite.config.ts                # Vite build configuration
 ├── vite-env.d.ts                 # Vite environment types
 ├── index.html                    # HTML entry point
-├── .env                          # Environment variables
+├── .env.example                  # Example environment variables
 ├── server/                       # Express server
 │   ├── server.ts                 # Server entry point
 │   └── routes/                   # Auto-loaded API routes
@@ -108,13 +108,14 @@ Examples:
 
 ## Environment Variables
 
-`template/.env` includes:
+`template/.env.example` includes:
 
 ```env
 PORT=3000
 NODE_ENV=development
 ```
 
+Copy `.env.example` to `.env` if you want to override defaults locally.
 `PORT` overrides the port in `stoix.config.ts`.
 
 ## Development and Production Flow

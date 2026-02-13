@@ -69,6 +69,12 @@ async function createProject(name: string): Promise<void> {
   fs.copySync(templateDir, targetDir, { overwrite: false });
   console.log(chalk.green('  + Project files created'));
 
+  // Never scaffold a real .env file; keep only .env.example.
+  const envFilePath = path.join(targetDir, '.env');
+  if (fs.existsSync(envFilePath)) {
+    fs.removeSync(envFilePath);
+  }
+
   const gitignoreSrc = path.join(targetDir, 'gitignore');
   const gitignoreDest = path.join(targetDir, '.gitignore');
   if (fs.existsSync(gitignoreSrc)) {
