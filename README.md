@@ -40,26 +40,26 @@ Project names must start with a letter and may contain letters, numbers, `.`, `_
 
 ```text
 my-app/
-|-- package.json
-|-- stoix.config.ts
-|-- tsconfig.json
-|-- tsconfig.server.json
-|-- vite.config.ts
-|-- vite-env.d.ts
-|-- index.html
-|-- .env
-|-- server/
-|   |-- server.ts
-|   `-- routes/
-|       `-- example.ts
-|-- src/
-|   |-- App.tsx
-|   |-- main.tsx
-|   `-- styles.css
-|-- pages/
-|   `-- index.tsx
-`-- public/
-    `-- favicon.svg
+├── package.json                  # Dependencies and scripts
+├── stoix.config.ts               # Stoix framework configuration
+├── tsconfig.json                 # TypeScript config (shared)
+├── tsconfig.server.json          # TypeScript config (server)
+├── vite.config.ts                # Vite build configuration
+├── vite-env.d.ts                 # Vite environment types
+├── index.html                    # HTML entry point
+├── .env                          # Environment variables
+├── server/                       # Express server
+│   ├── server.ts                 # Server entry point
+│   └── routes/                   # Auto-loaded API routes
+│       └── example.ts            # Example API route
+├── src/                          # React client source
+│   ├── App.tsx                   # Root React component
+│   ├── main.tsx                  # Client entry point
+│   └── styles.css                # Global styles
+├── pages/                        # SSR pages (if enabled)
+│   └── index.tsx                 # Home page
+└── public/                       # Static assets
+    └── favicon.svg               # Favicon
 ```
 
 ## Generated Scripts
