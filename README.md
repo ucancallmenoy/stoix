@@ -55,9 +55,7 @@ my-app/
 ├── src/                          # React client source
 │   ├── App.tsx                   # Root React component
 │   ├── main.tsx                  # Client entry point
-│   ├── styles.css                # Global styles
-│   └── pages/                    # SSR pages (if enabled)
-│       └── index.tsx             # Home page
+│   └── styles.css                # Global styles
 └── public/                       # Static assets
     └── favicon.svg               # Favicon
 ```
