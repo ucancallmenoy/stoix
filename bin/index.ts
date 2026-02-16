@@ -12,9 +12,58 @@ const __dirname = path.dirname(__filename);
 const STOIX_VERSION: string =
   fs.readJsonSync(path.resolve(__dirname, '..', '..', 'package.json')).version || '0.1.0';
 
-const args = process.argv.slice(2);
-const command = args[0];
-const projectName = args[1];
+interface CliOptions {
+  pm?: 'npm' | 'yarn' | 'pnpm' | 'bun';
+  install: boolean;
+  git: boolean;
+  yes: boolean;
+}
+
+function parseArgs(args: string[]): { command: string; projectName: string; options: CliOptions } {
+  const options: CliOptions = {
+    install: true,
+    git: false,
+    yes: false,
+  };
+
+  let command = '';
+  let projectName = '';
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+
+    if (arg === '--help' || arg === '-h' || arg === '--version' || arg === '-v') {
+      command = arg;
+      break;
+    }
+
+    if (arg === '--no-install') {
+      options.install = false;
+    } else if (arg === '--git') {
+      options.git = true;
+    } else if (arg === '--yes' || arg === '-y') {
+      options.yes = true;
+    } else if (arg === '--pm') {
+      const pm = args[++i];
+      if (pm === 'npm' || pm === 'yarn' || pm === 'pnpm' || pm === 'bun') {
+        options.pm = pm;
+      } else {
+        console.error(chalk.red(`\n  Error: Invalid package manager "${pm}". Use: npm, yarn, pnpm, or bun\n`));
+        process.exit(1);
+      }
+    } else if (!arg.startsWith('-')) {
+      if (!command) {
+        command = arg;
+      } else if (!projectName) {
+        projectName = arg;
+      }
+    }
+  }
+
+  return { command, projectName, options };
+}
+
+const { command, projectName, options } = parseArgs(process.argv.slice(2));
 
 function printBanner(): void {
   console.log(
@@ -30,14 +79,23 @@ function printBanner(): void {
 function printUsage(): void {
   printBanner();
   console.log(`${chalk.bold('Usage:')}
-  npx stoix create <project-name>
+  npx stoix create <project-name> [options]
 
 ${chalk.bold('Commands:')}
-  create <name>    Scaffold a new Stoix project
+  create <name>      Scaffold a new Stoix project
+
+${chalk.bold('Options:')}
+  --pm <manager>     Package manager to use (npm, yarn, pnpm, bun)
+  --no-install       Skip dependency installation
+  --git              Initialize git repository
+  --yes, -y          Skip prompts and use defaults
+  --help, -h         Show this help message
+  --version, -v      Show version number
 
 ${chalk.bold('Examples:')}
   npx stoix create my-app
-  npx stoix create blog-api
+  npx stoix create blog-api --pm pnpm --git
+  npx stoix create my-project --no-install --yes
 `);
 }
 
@@ -46,7 +104,31 @@ function validateProjectName(name: string): boolean {
   return validPattern.test(name);
 }
 
-async function createProject(name: string): Promise<void> {
+function detectPackageManager(): 'npm' | 'yarn' | 'pnpm' | 'bun' {
+  try {
+    execSync('bun --version', { stdio: 'ignore' });
+    return 'bun';
+  } catch {}
+  try {
+    execSync('pnpm --version', { stdio: 'ignore' });
+    return 'pnpm';
+  } catch {}
+  try {
+    execSync('yarn --version', { stdio: 'ignore' });
+    return 'yarn';
+  } catch {}
+  return 'npm';
+}
+
+function getInstallCommand(pm: 'npm' | 'yarn' | 'pnpm' | 'bun'): string {
+  return pm === 'npm' ? 'npm install' : `${pm} install`;
+}
+
+function getDevCommand(pm: 'npm' | 'yarn' | 'pnpm' | 'bun'): string {
+  return pm === 'npm' ? 'npm run dev' : `${pm} dev`;
+}
+
+async function createProject(name: string, opts: CliOptions): Promise<void> {
   const targetDir = path.resolve(process.cwd(), name);
 
   if (fs.existsSync(targetDir)) {
@@ -87,29 +169,61 @@ async function createProject(name: string): Promise<void> {
   fs.writeJsonSync(pkgPath, pkg, { spaces: 2 });
   console.log(chalk.green('  + package.json configured'));
 
-  console.log(chalk.cyan('\n  Installing dependencies...\n'));
-  let dependenciesInstalled = true;
-  try {
-    execSync('npm install', {
-      cwd: targetDir,
-      stdio: 'inherit',
-    });
-  } catch {
-    dependenciesInstalled = false;
-    console.error(chalk.yellow('\n  Warning: npm install failed. Run it manually.'));
+  // Determine package manager
+  const pm = opts.pm || detectPackageManager();
+  console.log(chalk.dim(`  Using package manager: ${pm}`));
+
+  // Install dependencies
+  let dependenciesInstalled = false;
+  if (opts.install) {
+    console.log(chalk.cyan('\n  Installing dependencies...\n'));
+    try {
+      execSync(getInstallCommand(pm), {
+        cwd: targetDir,
+        stdio: 'inherit',
+      });
+      dependenciesInstalled = true;
+    } catch {
+      console.error(chalk.yellow('\n  Warning: dependency installation failed. Run it manually.'));
+    }
+  } else {
+    console.log(chalk.yellow('\n  Skipping dependency installation (--no-install)'));
   }
 
+  // Initialize git repository
+  if (opts.git) {
+    console.log(chalk.cyan('\n  Initializing git repository...\n'));
+    try {
+      execSync('git init', {
+        cwd: targetDir,
+        stdio: 'inherit',
+      });
+      execSync('git add .', {
+        cwd: targetDir,
+        stdio: 'ignore',
+      });
+      execSync('git commit -m "Initial commit from Stoix"', {
+        cwd: targetDir,
+        stdio: 'ignore',
+      });
+      console.log(chalk.green('  + Git repository initialized'));
+    } catch {
+      console.error(chalk.yellow('  Warning: git initialization failed'));
+    }
+  }
+
+  // Print success message
   const statusLine = dependenciesInstalled
     ? chalk.green.bold('  + Stoix project is ready!')
-    : chalk.yellow.bold('  ! Stoix project files are ready (dependencies not installed)');
-  const installStep = dependenciesInstalled ? '' : `    ${chalk.cyan('npm install')}\n`;
+    : chalk.yellow.bold('  ! Stoix project files are ready' + (opts.install ? ' (dependencies not installed)' : ''));
+  const installStep = opts.install && !dependenciesInstalled ? `    ${chalk.cyan(getInstallCommand(pm))}\n` : '';
 
   console.log(`
 ${statusLine}
 
 ${chalk.bold('  Next steps:')}
     ${chalk.cyan(`cd ${name}`)}
-${installStep}    ${chalk.cyan('npm run dev')}
+${installStep}    ${chalk.cyan(getDevCommand(pm))}
 
 ${chalk.dim('  Stoix app will run at http://localhost:3000')}
 `);
@@ -147,7 +261,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  await createProject(projectName);
+  await createProject(projectName, options);
 }
 
 main().catch((err: Error) => {

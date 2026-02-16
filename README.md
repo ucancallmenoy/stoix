@@ -17,7 +17,27 @@ App URL: `http://localhost:3000`
 ### Create a project
 
 ```bash
-npx stoix create <project-name>
+npx stoix create <project-name> [options]
+```
+
+#### Options
+
+- `--pm <manager>` - Specify package manager (npm, yarn, pnpm, bun)
+- `--no-install` - Skip dependency installation
+- `--git` - Initialize git repository with initial commit
+- `--yes, -y` - Skip all prompts and use defaults
+
+#### Examples
+
+```bash
+# Basic usage
+npx stoix create my-app
+
+# Use specific package manager and initialize git
+npx stoix create blog-api --pm pnpm --git
+
+# Skip dependency installation
+npx stoix create my-project --no-install --yes
 ```
 
 ### Help and version
@@ -120,22 +140,6 @@ Copy `.env.example` to `.env` if you want to override defaults locally.
 
 - Development: Express runs first, then mounts Vite as middleware for client HMR.
 - Production: Express serves static files from `dist/client` and handles SPA fallback to `index.html`.
-
-## Framework Development (this repo)
-
-From this repository:
-
-```bash
-npm run build
-```
-
-`prepack` runs:
-
-```bash
-npm run clean && npm run build
-```
-
-This removes template build artifacts (`template/node_modules`, `template/dist`, `template/.vite`) before packaging.
 
 ## Current Limitations
 
