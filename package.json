@@ -1,6 +1,6 @@
 {
   "name": "stoix",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Stoix — A Node + Express + React framework with Vite, fully written in TypeScript",
   "type": "module",
   "bin": {
