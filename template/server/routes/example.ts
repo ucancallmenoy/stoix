@@ -1,28 +1,21 @@
-import { Router, type Request, type Response } from 'express';
+import type { Request, Response } from 'express';
 
-const router = Router();
+/** Optional route metadata -- available via res.locals.route in middleware. */
+export const route = {
+  tags: ['example'],
+};
 
 /**
  * GET /api/example
- * A sample API route to demonstrate Stoix auto-loading.
  *
- * Add more routes in server/routes/ — each file auto-mounts
- * at /api/<filename>.
+ * Named exports (GET, POST, PUT, PATCH, DELETE) map to the route path.
+ * For sub-paths, create additional files (e.g., routes/example/health.ts).
+ * You can also export default a Router for full control.
  */
-router.get('/', (_req: Request, res: Response) => {
+export function GET(_req: Request, res: Response) {
   res.json({
     message: 'Hello from Stoix!',
     framework: 'Stoix v0.1',
     timestamp: new Date().toISOString(),
   });
-});
-
-/**
- * GET /api/example/health
- * A simple health check endpoint.
- */
-router.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok' });
-});
-
-export default router;
+}

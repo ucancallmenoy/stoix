@@ -1,7 +1,7 @@
 {
   "name": "stoix",
   "version": "0.1.6",
-  "description": "Stoix — A Node + Express + React framework with Vite, fully written in TypeScript",
+  "description": "Stoix - A Node + Express + React framework with Vite, fully written in TypeScript",
   "type": "module",
   "bin": {
     "stoix": "dist/bin/index.js"

@@ -35,6 +35,10 @@ async function start() {
   app.use(express.urlencoded({ extended: true }));
 
   // Auto-mount route files in server/routes recursively at /api/<path-to-file>.
+  // Supports two patterns:
+  //   1. export default router   -- mounts the Router directly
+  //   2. export function GET / POST / PUT / PATCH / DELETE -- maps each method to the route
+  // Optional: export const route = { auth, rateLimit, tags } metadata (available via res.locals.route)
   const routesDir = path.join(__dirname, 'routes');
   if (fs.existsSync(routesDir)) {
     for (const filePath of getRouteFiles(routesDir).sort()) {
@@ -46,8 +50,31 @@ async function start() {
         .replace(/\/index$/, '');
       const routePath = routeFromFile ? `${config.server.apiPrefix}/${routeFromFile}` : config.server.apiPrefix;
 
-      const { default: router } = await import(pathToFileURL(filePath).href);
-      app.use(routePath, router);
+      const mod = await import(pathToFileURL(filePath).href);
+      const meta = mod.route;
+
+      // Attach route metadata so downstream middleware can read res.locals.route
+      if (meta) {
+        app.use(routePath, (_req: Request, res: Response, next: NextFunction) => {
+          res.locals.route = meta;
+          next();
+        });
+      }
+
+      if (mod.default) {
+        app.use(routePath, mod.default);
+      } else {
+        // Build a router from named method exports
+        const methodRouter = express.Router();
+        const methods = ['get', 'post', 'put', 'patch', 'delete'] as const;
+        for (const method of methods) {
+          const handler = mod[method] || mod[method.toUpperCase()];
+          if (typeof handler === 'function') {
+            methodRouter[method]('/', handler);
+          }
+        }
+        app.use(routePath, methodRouter);
+      }
     }
   }
 

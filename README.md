@@ -27,6 +27,17 @@ npx stoix create <project-name> [options]
 - `--git` - Initialize git repository with initial commit
 - `--yes, -y` - Skip all prompts and use defaults
 
+#### Interactive prompts
+
+By default, `stoix create` runs an interactive setup and asks:
+
+- Package manager (auto-detected default)
+- Install dependencies now?
+- Initialize git?
+- Include Docker/deploy files?
+
+Use `--yes` to skip prompts and accept defaults.
+
 #### Examples
 
 ```bash
@@ -112,16 +123,54 @@ Default values:
 
 ## API Routes
 
-Any file in `server/routes/` that default-exports an Express router is auto-mounted at:
+Route files in `server/routes/` are auto-mounted at `<apiPrefix>/<path-to-file>`.
 
-`<apiPrefix>/<path-to-file>`
+### Named method exports
 
-Examples:
+Export functions named after HTTP methods. Each handles the root path of the file:
+
+```ts
+// server/routes/users.ts -> GET /api/users
+import type { Request, Response } from 'express';
+
+export function GET(_req: Request, res: Response) {
+  res.json({ users: [] });
+}
+
+export function POST(req: Request, res: Response) {
+  res.json({ created: req.body });
+}
+```
+
+### Default router export
+
+For sub-paths or advanced middleware, export a Router:
+
+```ts
+// server/routes/auth.ts -> /api/auth/*
+import { Router } from 'express';
+const router = Router();
+router.get('/me', handler);
+router.post('/login', handler);
+export default router;
+```
+
+### Route metadata
+
+Export a `route` object to attach metadata (available via `res.locals.route` in middleware):
+
+```ts
+export const route = {
+  auth: true,
+  rateLimit: 60,
+  tags: ['users'],
+};
+```
+
+### Path mapping
 
 - `server/routes/users.ts` -> `/api/users`
 - `server/routes/auth/me.ts` -> `/api/auth/me`
-- `server/routes/user/profile.ts` -> `/api/user/profile`
-- `server/routes/try/get.ts` -> `/api/try/get`
 - `server/routes/auth/index.ts` -> `/api/auth`
 
 ## Environment Variables
@@ -141,11 +190,19 @@ Copy `.env.example` to `.env` if you want to override defaults locally.
 - Development: Express runs first, then mounts Vite as middleware for client HMR.
 - Production: Express serves static files from `dist/client` and handles SPA fallback to `index.html`.
 
-## Current Limitations
+## Deployment
 
-- Route modules are expected to `export default` an Express router.
+A `Dockerfile`, and `docker-compose.yml` are included in every scaffolded project.
+
+```bash
+# Docker
+docker build -t my-app .
+docker run -p 3000:3000 my-app
+
+# Docker Compose
+docker compose up --build
+```
 
 ## License
 
 MIT
-

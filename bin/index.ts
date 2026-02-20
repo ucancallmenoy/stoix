@@ -4,6 +4,8 @@ import { execSync } from 'node:child_process';
 import fs from 'fs-extra';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createInterface } from 'node:readline/promises';
+import type { Interface } from 'node:readline/promises';
 import chalk from 'chalk';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -12,17 +14,25 @@ const __dirname = path.dirname(__filename);
 const STOIX_VERSION: string =
   fs.readJsonSync(path.resolve(__dirname, '..', '..', 'package.json')).version || '0.1.0';
 
+type PackageManager = 'npm' | 'yarn' | 'pnpm' | 'bun';
+
 interface CliOptions {
-  pm?: 'npm' | 'yarn' | 'pnpm' | 'bun';
+  pm?: PackageManager;
+  install?: boolean;
+  git?: boolean;
+  yes: boolean;
+  includeDocker?: boolean;
+}
+
+interface CreateOptions {
+  pm: PackageManager;
   install: boolean;
   git: boolean;
-  yes: boolean;
+  includeDocker: boolean;
 }
 
 function parseArgs(args: string[]): { command: string; projectName: string; options: CliOptions } {
   const options: CliOptions = {
-    install: true,
-    git: false,
     yes: false,
   };
 
@@ -96,6 +106,10 @@ ${chalk.bold('Examples:')}
   npx stoix create my-app
   npx stoix create blog-api --pm pnpm --git
   npx stoix create my-project --no-install --yes
+
+${chalk.bold('Interactive setup:')}
+  By default, Stoix prompts for package manager, install, git, and Docker/deploy files.
+  Use --yes to skip prompts and accept defaults.
 `);
 }
 
@@ -120,15 +134,73 @@ function detectPackageManager(): 'npm' | 'yarn' | 'pnpm' | 'bun' {
   return 'npm';
 }
 
-function getInstallCommand(pm: 'npm' | 'yarn' | 'pnpm' | 'bun'): string {
+function getInstallCommand(pm: PackageManager): string {
   return pm === 'npm' ? 'npm install' : `${pm} install`;
 }
 
-function getDevCommand(pm: 'npm' | 'yarn' | 'pnpm' | 'bun'): string {
+function getDevCommand(pm: PackageManager): string {
   return pm === 'npm' ? 'npm run dev' : `${pm} dev`;
 }
 
-async function createProject(name: string, opts: CliOptions): Promise<void> {
+async function promptPackageManager(rl: Interface, defaultPm: PackageManager): Promise<PackageManager> {
+  const managers: PackageManager[] = ['npm', 'yarn', 'pnpm', 'bun'];
+  while (true) {
+    const input = (await rl.question(`  Package manager [npm/yarn/pnpm/bun] (${defaultPm}): `))
+      .trim()
+      .toLowerCase();
+    if (!input) return defaultPm;
+    if (managers.includes(input as PackageManager)) return input as PackageManager;
+    console.log(chalk.yellow('  Please choose one of: npm, yarn, pnpm, bun.'));
+  }
+}
+
+function parseYesNo(input: string): boolean | undefined {
+  const normalized = input.trim().toLowerCase();
+  if (normalized === 'y' || normalized === 'yes') return true;
+  if (normalized === 'n' || normalized === 'no') return false;
+  return undefined;
+}
+
+async function promptConfirm(rl: Interface, label: string, defaultValue: boolean): Promise<boolean> {
+  const hint = defaultValue ? 'Y/n' : 'y/N';
+  while (true) {
+    const input = (await rl.question(`  ${label} (${hint}): `)).trim();
+    if (!input) return defaultValue;
+    const parsed = parseYesNo(input);
+    if (parsed !== undefined) return parsed;
+    console.log(chalk.yellow('  Please answer with y or n.'));
+  }
+}
+
+async function collectCreateOptions(opts: CliOptions): Promise<CreateOptions> {
+  const defaults: CreateOptions = {
+    pm: opts.pm || detectPackageManager(),
+    install: opts.install ?? true,
+    git: opts.git ?? false,
+    includeDocker: opts.includeDocker ?? true,
+  };
+
+  if (opts.yes || !process.stdin.isTTY || !process.stdout.isTTY) {
+    return defaults;
+  }
+
+  console.log(chalk.cyan('\n  Configure your Stoix project:\n'));
+
+  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const pm = opts.pm ?? (await promptPackageManager(rl, defaults.pm));
+    const install = opts.install ?? (await promptConfirm(rl, 'Install dependencies now?', defaults.install));
+    const git = opts.git ?? (await promptConfirm(rl, 'Initialize git?', defaults.git));
+    const includeDocker =
+      opts.includeDocker ?? (await promptConfirm(rl, 'Include Docker/deploy files?', defaults.includeDocker));
+    console.log();
+    return { pm, install, git, includeDocker };
+  } finally {
+    rl.close();
+  }
+}
+
+async function createProject(name: string, opts: CreateOptions): Promise<void> {
   const targetDir = path.resolve(process.cwd(), name);
 
   if (fs.existsSync(targetDir)) {
@@ -139,7 +211,6 @@ async function createProject(name: string, opts: CliOptions): Promise<void> {
   printBanner();
   console.log(chalk.cyan(`  Creating Stoix project: ${chalk.bold(name)}\n`));
 
-  // Resolve template directory (relative to compiled dist/bin/index.js -> ../../template)
   const templateDir = path.resolve(__dirname, '..', '..', 'template');
 
   if (!fs.existsSync(templateDir)) {
@@ -151,7 +222,6 @@ async function createProject(name: string, opts: CliOptions): Promise<void> {
   fs.copySync(templateDir, targetDir, { overwrite: false });
   console.log(chalk.green('  + Project files created'));
 
-  // Never scaffold a real .env file; keep only .env.example.
   const envFilePath = path.join(targetDir, '.env');
   if (fs.existsSync(envFilePath)) {
     fs.removeSync(envFilePath);
@@ -169,16 +239,25 @@ async function createProject(name: string, opts: CliOptions): Promise<void> {
   fs.writeJsonSync(pkgPath, pkg, { spaces: 2 });
   console.log(chalk.green('  + package.json configured'));
 
-  // Determine package manager
-  const pm = opts.pm || detectPackageManager();
-  console.log(chalk.dim(`  Using package manager: ${pm}`));
+  if (!opts.includeDocker) {
+    const dockerArtifacts = ['Dockerfile', 'docker-compose.yml', '.dockerignore', 'DEPLOY.md'];
+    for (const artifact of dockerArtifacts) {
+      const artifactPath = path.join(targetDir, artifact);
+      if (fs.existsSync(artifactPath)) {
+        fs.removeSync(artifactPath);
+      }
+    }
+    console.log(chalk.green('  + Docker/deploy files excluded'));
+  }
+
+  console.log(chalk.dim(`  Using package manager: ${opts.pm}`));
 
   // Install dependencies
   let dependenciesInstalled = false;
   if (opts.install) {
     console.log(chalk.cyan('\n  Installing dependencies...\n'));
     try {
-      execSync(getInstallCommand(pm), {
+      execSync(getInstallCommand(opts.pm), {
         cwd: targetDir,
         stdio: 'inherit',
       });
@@ -216,14 +295,14 @@ async function createProject(name: string, opts: CliOptions): Promise<void> {
   const statusLine = dependenciesInstalled
     ? chalk.green.bold('  + Stoix project is ready!')
     : chalk.yellow.bold('  ! Stoix project files are ready' + (opts.install ? ' (dependencies not installed)' : ''));
-  const installStep = opts.install && !dependenciesInstalled ? `    ${chalk.cyan(getInstallCommand(pm))}\n` : '';
+  const installStep = opts.install && !dependenciesInstalled ? `    ${chalk.cyan(getInstallCommand(opts.pm))}\n` : '';
 
   console.log(`
 ${statusLine}
 
 ${chalk.bold('  Next steps:')}
     ${chalk.cyan(`cd ${name}`)}
-${installStep}    ${chalk.cyan(getDevCommand(pm))}
+${installStep}    ${chalk.cyan(getDevCommand(opts.pm))}
 
 ${chalk.dim('  Stoix app will run at http://localhost:3000')}
 `);
@@ -261,7 +340,8 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  await createProject(projectName, options);
+  const createOptions = await collectCreateOptions(options);
+  await createProject(projectName, createOptions);
 }
 
 main().catch((err: Error) => {

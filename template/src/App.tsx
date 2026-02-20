@@ -50,7 +50,7 @@ function App() {
 
           <blockquote className="stoix-quote">
             <p>
-              "You have power over your mind — not outside events. Realize this, and you will find strength."
+              "You have power over your mind -- not outside events. Realize this, and you will find strength."
             </p>
             <cite>- Marcus Aurelius</cite>
           </blockquote>
